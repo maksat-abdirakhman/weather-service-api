@@ -7,7 +7,6 @@ class Settings(BaseSettings):
     weather_api_key: str = ""
     weather_api_url: str = "https://api.openweathermap.org/data/2.5/weather"
     weather_update_interval_minutes: int = 30
-    default_cities: str = "Astana,Almaty,Shymkent,Karagandy,Kostanay,Kyzylorda,Aktobe,Taraz,Turkestan"
     app_name: str = "Weather Service API"
     debug: bool = False
     

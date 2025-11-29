@@ -106,3 +106,9 @@ class WeatherService:
         query = select(Weather.city, Weather.country).distinct()
         result = await self.db.execute(query)
         return [f"{row.city}, {row.country}" for row in result.all()]
+    
+    async def get_unique_cities(self) -> List[str]:
+        """Get list of unique city names from the database."""
+        query = select(Weather.city).distinct()
+        result = await self.db.execute(query)
+        return [row[0] for row in result.all()]

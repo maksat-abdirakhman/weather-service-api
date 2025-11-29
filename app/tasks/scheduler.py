@@ -14,16 +14,20 @@ scheduler = AsyncIOScheduler()
 
 
 async def update_weather_for_cities():
-    settings = get_settings()
-    cities = [c.strip() for c in settings.default_cities.split(",")]
-    
-    logger.info(f"Starting weather update for {len(cities)} cities")
-    
     fetcher = WeatherFetcher()
     
     async with async_session_maker() as db:
         weather_service = WeatherService(db)
         log_service = LogService(db)
+        
+        # Get all cities from database
+        cities = await weather_service.get_unique_cities()
+        
+        if not cities:
+            logger.info("No cities in database to update")
+            return
+        
+        logger.info(f"Starting weather update for {len(cities)} cities from database")
         
         tasks = [fetcher.fetch_weather(city) for city in cities]
         results = await asyncio.gather(*tasks, return_exceptions=True)

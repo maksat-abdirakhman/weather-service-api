@@ -33,7 +33,6 @@ services:
       - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/weather_db
       - WEATHER_API_KEY=${WEATHER_API_KEY:-}
       - WEATHER_UPDATE_INTERVAL_MINUTES=30
-      - DEFAULT_CITIES=Moscow,London,New York,Tokyo,Paris,Berlin,Sydney,Dubai
       - DEBUG=false
     depends_on:
       db:
