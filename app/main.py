@@ -8,7 +8,6 @@ from app.database import init_db
 from app.api import weather_router, logs_router
 from app.tasks import start_scheduler, stop_scheduler
 
-# Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -18,8 +17,6 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Application lifespan events."""
-    # Startup
     logger.info("Starting Weather Service...")
     await init_db()
     logger.info("Database initialized")
@@ -29,7 +26,6 @@ async def lifespan(app: FastAPI):
     
     yield
     
-    # Shutdown
     stop_scheduler()
     logger.info("Scheduler stopped")
     logger.info("Weather Service stopped")
@@ -44,7 +40,6 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -53,14 +48,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
 app.include_router(weather_router, prefix="/api/v1")
 app.include_router(logs_router, prefix="/api/v1")
 
 
 @app.get("/", response_class=HTMLResponse)
 async def root():
-    """Root endpoint with API documentation link."""
     return """
     <!DOCTYPE html>
     <html lang="en">
@@ -69,11 +62,7 @@ async def root():
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Weather Service API</title>
         <style>
-            * {
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-            }
+            * { margin: 0; padding: 0; box-sizing: border-box; }
             body {
                 font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
                 background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
@@ -99,16 +88,8 @@ async def root():
                 margin-bottom: 10px;
                 text-shadow: 0 0 30px rgba(0, 217, 255, 0.3);
             }
-            .subtitle {
-                color: rgba(255, 255, 255, 0.7);
-                font-size: 1.1em;
-                margin-bottom: 30px;
-            }
-            .links {
-                display: flex;
-                flex-direction: column;
-                gap: 15px;
-            }
+            .subtitle { color: rgba(255, 255, 255, 0.7); font-size: 1.1em; margin-bottom: 30px; }
+            .links { display: flex; flex-direction: column; gap: 15px; }
             a {
                 display: flex;
                 align-items: center;
@@ -126,21 +107,10 @@ async def root():
                 border-color: rgba(0, 217, 255, 0.6);
                 transform: translateX(5px);
             }
-            .icon {
-                font-size: 1.5em;
-            }
-            .link-text {
-                display: flex;
-                flex-direction: column;
-            }
-            .link-title {
-                font-weight: 600;
-                font-size: 1.1em;
-            }
-            .link-desc {
-                font-size: 0.85em;
-                color: rgba(255, 255, 255, 0.6);
-            }
+            .icon { font-size: 1.5em; }
+            .link-text { display: flex; flex-direction: column; }
+            .link-title { font-weight: 600; font-size: 1.1em; }
+            .link-desc { font-size: 0.85em; color: rgba(255, 255, 255, 0.6); }
             .status {
                 margin-top: 30px;
                 padding: 15px;
@@ -158,21 +128,14 @@ async def root():
                 border-radius: 50%;
                 animation: pulse 2s infinite;
             }
-            @keyframes pulse {
-                0%, 100% { opacity: 1; }
-                50% { opacity: 0.5; }
-            }
-            .status-text {
-                color: #00ff88;
-                font-weight: 500;
-            }
+            @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+            .status-text { color: #00ff88; font-weight: 500; }
         </style>
     </head>
     <body>
         <div class="container">
             <h1>⛅ Weather Service API</h1>
             <p class="subtitle">Asynchronous microservice for weather data management</p>
-            
             <div class="links">
                 <a href="/docs">
                     <span class="icon">📖</span>
@@ -203,7 +166,6 @@ async def root():
                     </div>
                 </a>
             </div>
-            
             <div class="status">
                 <div class="status-dot"></div>
                 <span class="status-text">Service is running</span>
@@ -216,6 +178,4 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint."""
     return {"status": "healthy", "service": "weather-service"}
-

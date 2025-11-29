@@ -7,8 +7,6 @@ from app.models.log import ActionLog
 
 
 class LogService:
-    """Service for managing action logs."""
-    
     def __init__(self, db: AsyncSession):
         self.db = db
     
@@ -23,7 +21,6 @@ class LogService:
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None,
     ) -> ActionLog:
-        """Log an action."""
         if details and not isinstance(details, str):
             details = json.dumps(details, default=str)
         
@@ -51,11 +48,9 @@ class LogService:
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
     ) -> Tuple[List[ActionLog], int]:
-        """Get action logs with pagination and filters."""
         query = select(ActionLog)
         count_query = select(func.count(ActionLog.id))
         
-        # Apply filters
         conditions = []
         if action:
             conditions.append(ActionLog.action == action)
@@ -72,11 +67,9 @@ class LogService:
             query = query.where(and_(*conditions))
             count_query = count_query.where(and_(*conditions))
         
-        # Get total count
         total_result = await self.db.execute(count_query)
         total = total_result.scalar()
         
-        # Apply pagination
         offset = (page - 1) * size
         query = query.order_by(ActionLog.created_at.desc()).offset(offset).limit(size)
         
@@ -86,14 +79,12 @@ class LogService:
         return list(items), total
     
     async def get_log_by_id(self, log_id: int) -> Optional[ActionLog]:
-        """Get a specific log entry."""
         result = await self.db.execute(
             select(ActionLog).where(ActionLog.id == log_id)
         )
         return result.scalar_one_or_none()
     
     async def get_actions_summary(self) -> dict:
-        """Get summary of actions."""
         query = select(
             ActionLog.action,
             ActionLog.status,
@@ -110,4 +101,3 @@ class LogService:
             summary[action][row.status] = row.count
         
         return summary
-

@@ -6,26 +6,13 @@ from app.schemas.weather import WeatherCreate
 
 
 class WeatherFetcher:
-    """Service for fetching weather data from external API."""
-    
     def __init__(self):
         self.settings = get_settings()
         self.api_key = self.settings.weather_api_key
         self.api_url = self.settings.weather_api_url
     
     async def fetch_weather(self, city: str) -> Optional[WeatherCreate]:
-        """
-        Fetch weather data for a city from OpenWeatherMap API.
-        Falls back to mock data if API is unavailable.
-        
-        Args:
-            city: City name (can include country code, e.g., "London,UK")
-            
-        Returns:
-            WeatherCreate schema or None if request failed
-        """
         if not self.api_key:
-            # Return mock data if no API key is configured
             return await self._get_mock_weather(city)
         
         try:
@@ -35,7 +22,7 @@ class WeatherFetcher:
                     params={
                         "q": city,
                         "appid": self.api_key,
-                        "units": "metric",  # Get temperature in Celsius
+                        "units": "metric",
                     },
                     timeout=10.0,
                 )
@@ -43,15 +30,12 @@ class WeatherFetcher:
                 if response.status_code == 200:
                     return self._parse_response(response.json())
                 else:
-                    # Fallback to mock data on API error (401, 429, etc.)
                     return await self._get_mock_weather(city)
                     
         except Exception:
-            # Fallback to mock data on network error
             return await self._get_mock_weather(city)
     
     def _parse_response(self, data: Dict[str, Any]) -> WeatherCreate:
-        """Parse OpenWeatherMap API response to WeatherCreate schema."""
         main = data.get("main", {})
         wind = data.get("wind", {})
         clouds = data.get("clouds", {})
@@ -78,17 +62,12 @@ class WeatherFetcher:
         )
     
     async def _get_mock_weather(self, city: str) -> WeatherCreate:
-        """
-        Generate mock weather data for testing without API key.
-        """
         import random
         
-        # Parse city and country from input
         parts = city.split(",")
         city_name = parts[0].strip()
         country = parts[1].strip() if len(parts) > 1 else "Unknown"
         
-        # Generate random but realistic weather data
         temperature = round(random.uniform(-10, 35), 1)
         
         return WeatherCreate(
@@ -114,4 +93,3 @@ class WeatherFetcher:
             visibility=random.randint(1000, 10000),
             data_timestamp=datetime.utcnow(),
         )
-

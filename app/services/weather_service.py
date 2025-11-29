@@ -7,13 +7,10 @@ from app.schemas.weather import WeatherCreate, WeatherUpdate
 
 
 class WeatherService:
-    """Service for managing weather data."""
-    
     def __init__(self, db: AsyncSession):
         self.db = db
     
     async def create(self, weather_data: WeatherCreate) -> Weather:
-        """Create a new weather record."""
         data = weather_data.model_dump()
         if data.get("data_timestamp") is None:
             data["data_timestamp"] = datetime.utcnow()
@@ -25,21 +22,13 @@ class WeatherService:
         return weather
     
     async def get_by_id(self, weather_id: int) -> Optional[Weather]:
-        """Get weather record by ID."""
         result = await self.db.execute(
             select(Weather).where(Weather.id == weather_id)
         )
         return result.scalar_one_or_none()
     
-    async def get_by_city(
-        self, 
-        city: str, 
-        country: Optional[str] = None
-    ) -> Optional[Weather]:
-        """Get latest weather record for a city."""
-        query = select(Weather).where(
-            func.lower(Weather.city) == city.lower()
-        )
+    async def get_by_city(self, city: str, country: Optional[str] = None) -> Optional[Weather]:
+        query = select(Weather).where(func.lower(Weather.city) == city.lower())
         if country:
             query = query.where(func.lower(Weather.country) == country.lower())
         
@@ -54,11 +43,9 @@ class WeatherService:
         city: Optional[str] = None,
         country: Optional[str] = None,
     ) -> Tuple[List[Weather], int]:
-        """Get all weather records with pagination."""
         query = select(Weather)
         count_query = select(func.count(Weather.id))
         
-        # Apply filters
         conditions = []
         if city:
             conditions.append(func.lower(Weather.city) == city.lower())
@@ -69,11 +56,9 @@ class WeatherService:
             query = query.where(and_(*conditions))
             count_query = count_query.where(and_(*conditions))
         
-        # Get total count
         total_result = await self.db.execute(count_query)
         total = total_result.scalar()
         
-        # Apply pagination
         offset = (page - 1) * size
         query = query.order_by(Weather.data_timestamp.desc()).offset(offset).limit(size)
         
@@ -82,12 +67,7 @@ class WeatherService:
         
         return list(items), total
     
-    async def update(
-        self, 
-        weather_id: int, 
-        weather_data: WeatherUpdate
-    ) -> Optional[Weather]:
-        """Update a weather record."""
+    async def update(self, weather_id: int, weather_data: WeatherUpdate) -> Optional[Weather]:
         weather = await self.get_by_id(weather_id)
         if not weather:
             return None
@@ -102,7 +82,6 @@ class WeatherService:
         return weather
     
     async def delete(self, weather_id: int) -> bool:
-        """Delete a weather record."""
         weather = await self.get_by_id(weather_id)
         if not weather:
             return False
@@ -112,29 +91,18 @@ class WeatherService:
         return True
     
     async def upsert_by_city(self, weather_data: WeatherCreate) -> Tuple[Weather, bool]:
-        """
-        Insert or update weather record by city.
-        Returns tuple of (weather, is_new).
-        """
-        existing = await self.get_by_city(
-            weather_data.city, 
-            weather_data.country
-        )
+        existing = await self.get_by_city(weather_data.city, weather_data.country)
         
         if existing:
-            # Update existing record - exclude None values to preserve existing data
             update_dict = {k: v for k, v in weather_data.model_dump().items() if v is not None}
             update_data = WeatherUpdate(**update_dict)
             weather = await self.update(existing.id, update_data)
             return weather, False
         else:
-            # Create new record
             weather = await self.create(weather_data)
             return weather, True
     
     async def get_cities_list(self) -> List[str]:
-        """Get list of unique cities in database."""
         query = select(Weather.city, Weather.country).distinct()
         result = await self.db.execute(query)
         return [f"{row.city}, {row.country}" for row in result.all()]
-

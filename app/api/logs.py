@@ -1,6 +1,6 @@
 from typing import Optional
 from datetime import datetime
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.schemas.log import ActionLogResponse, ActionLogListResponse
@@ -12,16 +12,15 @@ router = APIRouter(prefix="/logs", tags=["Logs"])
 
 @router.get("/", response_model=ActionLogListResponse)
 async def get_logs(
-    page: int = Query(1, ge=1, description="Page number"),
-    size: int = Query(20, ge=1, le=100, description="Items per page"),
-    action: Optional[str] = Query(None, description="Filter by action (CREATE, UPDATE, DELETE, FETCH)"),
-    entity: Optional[str] = Query(None, description="Filter by entity type"),
-    status: Optional[str] = Query(None, description="Filter by status (success, error)"),
-    start_date: Optional[datetime] = Query(None, description="Filter logs after this date"),
-    end_date: Optional[datetime] = Query(None, description="Filter logs before this date"),
+    page: int = Query(1, ge=1),
+    size: int = Query(20, ge=1, le=100),
+    action: Optional[str] = Query(None),
+    entity: Optional[str] = Query(None),
+    status: Optional[str] = Query(None),
+    start_date: Optional[datetime] = Query(None),
+    end_date: Optional[datetime] = Query(None),
     db: AsyncSession = Depends(get_db),
 ):
-    """Get action logs with pagination and filters."""
     service = LogService(db)
     items, total = await service.get_logs(
         page=page,
@@ -46,7 +45,6 @@ async def get_logs(
 
 @router.get("/summary")
 async def get_logs_summary(db: AsyncSession = Depends(get_db)):
-    """Get summary of all actions."""
     service = LogService(db)
     return await service.get_actions_summary()
 
@@ -56,13 +54,10 @@ async def get_log(
     log_id: int,
     db: AsyncSession = Depends(get_db),
 ):
-    """Get a specific log entry."""
     service = LogService(db)
     log = await service.get_log_by_id(log_id)
     
     if not log:
-        from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="Log not found")
     
     return log
-

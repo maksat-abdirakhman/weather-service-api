@@ -10,15 +10,10 @@ from app.services.log_service import LogService
 
 logger = logging.getLogger(__name__)
 
-# Create scheduler instance
 scheduler = AsyncIOScheduler()
 
 
 async def update_weather_for_cities():
-    """
-    Periodic task to update weather data for all tracked cities.
-    This runs asynchronously and updates all cities in parallel.
-    """
     settings = get_settings()
     cities = [c.strip() for c in settings.default_cities.split(",")]
     
@@ -30,7 +25,6 @@ async def update_weather_for_cities():
         weather_service = WeatherService(db)
         log_service = LogService(db)
         
-        # Fetch weather data for all cities in parallel
         tasks = [fetcher.fetch_weather(city) for city in cities]
         results = await asyncio.gather(*tasks, return_exceptions=True)
         
@@ -83,10 +77,8 @@ async def update_weather_for_cities():
 
 
 def start_scheduler():
-    """Start the scheduler with weather update task."""
     settings = get_settings()
     
-    # Add weather update job
     scheduler.add_job(
         update_weather_for_cities,
         trigger=IntervalTrigger(minutes=settings.weather_update_interval_minutes),
@@ -100,8 +92,6 @@ def start_scheduler():
 
 
 def stop_scheduler():
-    """Stop the scheduler."""
     if scheduler.running:
         scheduler.shutdown()
         logger.info("Scheduler stopped")
-

@@ -17,7 +17,6 @@ router = APIRouter(prefix="/weather", tags=["Weather"])
 
 
 def get_client_info(request: Request) -> tuple:
-    """Extract client info from request."""
     ip = request.client.host if request.client else None
     user_agent = request.headers.get("user-agent")
     return ip, user_agent
@@ -29,7 +28,6 @@ async def create_weather(
     request: Request,
     db: AsyncSession = Depends(get_db),
 ):
-    """Create a new weather record."""
     service = WeatherService(db)
     log_service = LogService(db)
     ip, user_agent = get_client_info(request)
@@ -59,13 +57,12 @@ async def create_weather(
 
 @router.get("/", response_model=WeatherListResponse)
 async def get_weather_list(
-    page: int = Query(1, ge=1, description="Page number"),
-    size: int = Query(10, ge=1, le=100, description="Items per page"),
-    city: Optional[str] = Query(None, description="Filter by city"),
-    country: Optional[str] = Query(None, description="Filter by country"),
+    page: int = Query(1, ge=1),
+    size: int = Query(10, ge=1, le=100),
+    city: Optional[str] = Query(None),
+    country: Optional[str] = Query(None),
     db: AsyncSession = Depends(get_db),
 ):
-    """Get list of weather records with pagination."""
     service = WeatherService(db)
     items, total = await service.get_all(page=page, size=size, city=city, country=country)
     
@@ -82,7 +79,6 @@ async def get_weather_list(
 
 @router.get("/cities", response_model=list)
 async def get_cities(db: AsyncSession = Depends(get_db)):
-    """Get list of all cities with weather data."""
     service = WeatherService(db)
     return await service.get_cities_list()
 
@@ -90,10 +86,9 @@ async def get_cities(db: AsyncSession = Depends(get_db)):
 @router.get("/city/{city_name}", response_model=WeatherResponse)
 async def get_weather_by_city(
     city_name: str,
-    country: Optional[str] = Query(None, description="Country filter"),
+    country: Optional[str] = Query(None),
     db: AsyncSession = Depends(get_db),
 ):
-    """Get latest weather data for a specific city."""
     service = WeatherService(db)
     weather = await service.get_by_city(city_name, country)
     
@@ -108,7 +103,6 @@ async def get_weather(
     weather_id: int,
     db: AsyncSession = Depends(get_db),
 ):
-    """Get weather record by ID."""
     service = WeatherService(db)
     weather = await service.get_by_id(weather_id)
     
@@ -125,7 +119,6 @@ async def update_weather(
     request: Request,
     db: AsyncSession = Depends(get_db),
 ):
-    """Update a weather record."""
     service = WeatherService(db)
     log_service = LogService(db)
     ip, user_agent = get_client_info(request)
@@ -166,7 +159,6 @@ async def delete_weather(
     request: Request,
     db: AsyncSession = Depends(get_db),
 ):
-    """Delete a weather record."""
     service = WeatherService(db)
     log_service = LogService(db)
     ip, user_agent = get_client_info(request)
@@ -205,10 +197,6 @@ async def fetch_weather_for_city(
     request: Request,
     db: AsyncSession = Depends(get_db),
 ):
-    """
-    Fetch weather data for a city from external API and save to database.
-    If record exists for the city, it will be updated.
-    """
     fetcher = WeatherFetcher()
     service = WeatherService(db)
     log_service = LogService(db)
@@ -252,4 +240,3 @@ async def fetch_weather_for_city(
             user_agent=user_agent,
         )
         raise HTTPException(status_code=500, detail=str(e))
-

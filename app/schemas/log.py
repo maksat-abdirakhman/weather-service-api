@@ -4,8 +4,6 @@ from pydantic import BaseModel, ConfigDict
 
 
 class ActionLogResponse(BaseModel):
-    """Schema for action log response."""
-    
     model_config = ConfigDict(from_attributes=True)
     
     id: int
@@ -21,8 +19,6 @@ class ActionLogResponse(BaseModel):
 
 
 class ActionLogListResponse(BaseModel):
-    """Schema for list of action logs response."""
-    
     items: List[ActionLogResponse]
     total: int
     page: int
@@ -31,11 +27,8 @@ class ActionLogListResponse(BaseModel):
 
 
 class ActionLogFilter(BaseModel):
-    """Schema for filtering action logs."""
-    
     action: Optional[str] = None
     entity: Optional[str] = None
     status: Optional[str] = None
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
-
